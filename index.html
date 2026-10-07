@@ -1,190 +1,307 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Chave Interclasse 2026 - Almirante Barroso</title>
-<style>
-:root{
-  --bg:#0f1720; --panel:#16212c; --line:#3a4a5a; --accent:#ffb703;
-  --text:#eef2f5; --sub:#9fb0bd; --box:#1d2b38;
-}
-@media (prefers-color-scheme: light){
-  :root:not([data-theme="dark"]){
-    --bg:#f4f6f8; --panel:#ffffff; --line:#c7d0d8; --accent:#e07a00;
-    --text:#152230; --sub:#5c6b78; --box:#eef2f6;
-  }
-}
-*{box-sizing:border-box;}
-html,body{margin:0;background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);}
-h1{font-size:1.3rem;padding:20px 20px 4px;margin:0;}
-.subtitle{padding:0 20px 16px;color:var(--sub);font-size:.85rem;}
-.tabs{display:flex;gap:8px;padding:0 20px 14px;flex-wrap:wrap;}
-.tab{background:var(--panel);border:1px solid var(--line);color:var(--text);
-  padding:8px 14px;border-radius:20px;font-size:.85rem;cursor:pointer;}
-.tab.active{background:var(--accent);color:#1a1204;border-color:var(--accent);font-weight:600;}
-.bracket-wrap{display:none;position:relative;overflow-x:auto;padding:10px 20px 30px;}
-.bracket-wrap.active{display:block;}
-.bracket{position:relative;display:flex;gap:60px;min-width:max-content;}
-.round{display:flex;flex-direction:column;justify-content:space-around;gap:22px;min-width:220px;}
-.round-title{text-align:center;color:var(--sub);font-size:.72rem;text-transform:uppercase;
-  letter-spacing:.06em;margin-bottom:4px;}
-.match{background:var(--box);border:1px solid var(--line);border-radius:10px;padding:8px 10px;
-  position:relative;z-index:2;}
-.match .day{font-size:.65rem;color:var(--accent);font-weight:600;margin-bottom:3px;}
-.team{padding:4px 6px;border-radius:5px;outline:none;font-size:.85rem;}
-.team:focus{background:rgba(255,183,3,.15);}
-.vs{font-size:.6rem;color:var(--sub);text-align:center;padding:1px 0;}
-.time{font-size:.7rem;color:var(--sub);outline:none;text-align:right;margin-top:3px;}
-.time:focus{background:rgba(255,183,3,.15);border-radius:4px;}
-.badge{font-size:.6rem;background:rgba(255,183,3,.15);color:var(--accent);
-  padding:1px 5px;border-radius:8px;margin-left:4px;}
-svg.lines{position:absolute;top:0;left:0;pointer-events:none;z-index:1;overflow:visible;}
-.lines path{fill:none;stroke:var(--line);stroke-width:2;}
-.note{padding:0 20px 24px;color:var(--sub);font-size:.8rem;max-width:640px;}
-.final-box{border:2px solid var(--accent) !important;}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0,
+        maximum-scale=1.0, user-scalable=no">
+
+  <meta name="theme-color" content="#000000">
+  <title>Enigma</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: #000;
+      color: #39ff14;
+      font-family: monospace;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    #app {
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+
+    #foto {
+      display: block;
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      border-radius: 18px;
+      margin-bottom: 28px;
+    }
+
+    input {
+      display: block;
+      width: 100%;
+      background: #050505;
+      color: #39ff14;
+      border: 1px solid #228b22;
+      border-radius: 8px;
+      padding: 15px;
+      outline: none;
+      font-family: monospace;
+      font-size: 16px;
+      margin-bottom: 14px;
+    }
+
+    input:focus {
+      border-color: #39ff14;
+    }
+
+    button {
+      width: 100%;
+      background: #102010;
+      color: #39ff14;
+      border: 1px solid #39ff14;
+      border-radius: 8px;
+      padding: 14px;
+      font-family: monospace;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button:active {
+      background: #204020;
+    }
+
+    #morse {
+      position: fixed;
+      z-index: 10;
+      max-width: 90vw;
+      color: #39ff14;
+      background: #000;
+      border: 1px solid #174b17;
+      padding: 9px;
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    #mensagem {
+      color: #39ff14;
+      font-family: monospace;
+      font-size: 16px;
+      line-height: 1.9;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      direction: rtl;
+      text-align: center;
+    }
+
+    .encerrado {
+      background: #000 !important;
+      color: #000 !important;
+    }
+
+    .encerrado #app {
+      display: none;
+    }
+
+    .oculto {
+      display: none !important;
+    }
+
+    /* As cores são sólidas, sem animação. */
+    body.cor-rosa {
+      background: #F5A9C8;
+    }
+
+    body.cor-laranja {
+      background: #E9742B;
+    }
+
+    body.cor-azul {
+      background: #0000FF;
+    }
+  </style>
 </head>
+
 <body>
-<h1>🏆 Chave Interclasse 2026 — Almirante Barroso</h1>
-<div class="subtitle">Toque em qualquer time ou horário para editar. Setas ligam cada jogo ao confronto seguinte.</div>
-<div class="tabs">
-  <button class="tab active" data-target="futsal">Futsal Masculino / Basquete X3</button>
-  <button class="tab" data-target="volei">Vôlei Misto</button>
-</div>
+  <main id="app">
 
-<div class="bracket-wrap active" id="futsal"><div class="bracket" id="futsal-bracket"></div></div>
-<div class="note" id="futsal-note"></div>
+    <!-- PRIMEIRA TELA -->
+    <section id="tela1">
+      <img id="foto" src="foto1.png" alt="">
 
-<div class="bracket-wrap" id="volei"><div class="bracket" id="volei-bracket"></div></div>
-<div class="note" id="volei-note"></div>
+      <form id="form1">
+        <input
+          id="resposta1"
+          type="text"
+          placeholder="Digite sua resposta..."
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          required
+        >
 
-<script>
-// ---- Dados extraídos da tabela oficial ----
-const futsal = {
-  rounds: [
-    { title: "Segunda (14/09)", matches: [
-      {id:"f1", a:"2V2 RDC", b:"2V1 RDC", time:"13H50", badge:"⚽🏀"},
-      {id:"f2", a:"1V1 LOG", b:"1V1 RDC", time:"14H40", badge:"⚽🏀"},
-      {id:"f3", a:"1V2 ADM", b:"1V1 ADM", time:"15H20", badge:"⚽"},
-      {id:"f4", a:"2V1 LOG", b:"2V1 ADM", time:"16H50", badge:"⚽"},
-      {id:"f5", a:"3V1 ADM", b:"3V2 RDC", time:"17H30", badge:"⚽🏀"},
-      {id:"f6", a:"2V2 LOG", b:"1V2 RDC", time:"18H20", badge:"⚽🏀"},
-    ]},
-    { title: "Terça (15/09) — Oitavas", matches: [
-      {id:"f7", a:"3V1 RDC ANO", b:"Vencedor J1", time:"13H50"},
-      {id:"f8", a:"Melhor Perdedor", b:"Vencedor J2", time:"14H40"},
-      {id:"f9", a:"Vencedor J3", b:"Vencedor J4", time:"15H20"},
-      {id:"f10", a:"Vencedor J5", b:"Vencedor J6", time:"16H50"},
-    ]},
-    { title: "Terça (15/09) — Semis", matches: [
-      {id:"f11", a:"Vencedor J7", b:"Vencedor J8", time:"17H30"},
-      {id:"f12", a:"Vencedor J9", b:"Vencedor J10", time:"18H20"},
-    ]},
-    { title: "Sexta — Final", matches: [
-      {id:"f13", a:"Vencedor J11", b:"Vencedor J12", time:"Após o recreio", final:true},
-    ]},
-  ],
-  connections: [["f1","f7"],["f2","f8"],["f3","f9"],["f4","f9"],["f5","f10"],["f6","f10"],
-                ["f7","f11"],["f8","f11"],["f9","f12"],["f10","f12"],["f11","f13"],["f12","f13"]]
-};
+        <button type="submit">CONFIRMAR</button>
+      </form>
+    </section>
 
-const volei = {
-  rounds: [
-    { title: "Quarta (16/09)", matches: [
-      {id:"v1", a:"1V2 ADM", b:"1V1 ADM", time:"13H50", badge:"A"},
-      {id:"v2", a:"2V1 LOG", b:"2V1 ADM", time:"14H40", badge:"B"},
-      {id:"v3", a:"2V2 RDC", b:"2V1 RDC", time:"15H20", badge:"C"},
-      {id:"v4", a:"1V1 LOG", b:"1V1 RDC", time:"16H50", badge:"D"},
-      {id:"v5", a:"2V2 LOG", b:"1V2 RDC", time:"17H30", badge:"E"},
-    ]},
-    { title: "Quarta — Cruzamento", matches: [
-      {id:"v6", a:"Vencedor A", b:"Vencedor B", time:"18H20"},
-    ]},
-    { title: "Quinta (17/09)", matches: [
-      {id:"v7", a:"2V2 ADM", b:"3V1 ADM", time:"13H50", badge:"F*"},
-      {id:"v8", a:"Vencedor C", b:"Vencedor A", time:"14H40"},
-      {id:"v9", a:"Vencedor E", b:"Vencedor F", time:"15H20"},
-      {id:"v10", a:"Vencedor B", b:"Vencedor C", time:"16H50"},
-      {id:"v11", a:"Vencedor F", b:"Vencedor D", time:"17H30"},
-      {id:"v12", a:"Vencedor D", b:"Vencedor E", time:"18H20"},
-    ]},
-  ],
-  connections: [["v1","v6"],["v2","v6"],["v3","v8"],["v1","v8"],["v5","v9"],["v7","v9"],
-                ["v2","v10"],["v3","v10"],["v7","v11"],["v4","v11"],["v4","v12"],["v5","v12"]]
-};
+    <!-- MENSAGEM EM MORSE -->
+    <div id="morse" class="oculto">
+      -. --- / --- .-.. .... . / -- .. -. .... .- / -... .. ---
+    </div>
 
-function renderBracket(data, containerId){
-  const container = document.getElementById(containerId);
-  container.innerHTML = "";
-  const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-  svg.setAttribute("class","lines");
-  container.appendChild(svg);
+    <!-- SEGUNDA TELA -->
+    <section id="tela2" class="oculto">
+      <form id="form2">
+        <input
+          id="resposta2"
+          type="text"
+          placeholder="..."
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          required
+        >
 
-  data.rounds.forEach(round=>{
-    const col = document.createElement("div");
-    col.className = "round";
-    const t = document.createElement("div");
-    t.className = "round-title"; t.textContent = round.title;
-    col.appendChild(t);
-    round.matches.forEach(m=>{
-      const box = document.createElement("div");
-      box.className = "match" + (m.final ? " final-box" : "");
-      box.id = m.id;
-      box.innerHTML = `
-        <div class="team" contenteditable="true">${m.a}${m.badge ? `<span class="badge">${m.badge}</span>`:""}</div>
-        <div class="vs">vs</div>
-        <div class="team" contenteditable="true">${m.b}</div>
-        <div class="time" contenteditable="true">${m.time}</div>`;
-      col.appendChild(box);
+        <button type="submit">CONFIRMAR</button>
+      </form>
+    </section>
+
+    <!-- MENSAGEM FINAL -->
+    <section id="telaFinal" class="oculto">
+      <div id="mensagem" lang="he" dir="rtl"></div>
+    </section>
+
+  </main>
+
+  <script>
+    const tela1 = document.getElementById("tela1");
+    const tela2 = document.getElementById("tela2");
+    const telaFinal = document.getElementById("telaFinal");
+
+    const form1 = document.getElementById("form1");
+    const form2 = document.getElementById("form2");
+
+    const resposta1 = document.getElementById("resposta1");
+    const resposta2 = document.getElementById("resposta2");
+
+    const morse = document.getElementById("morse");
+    const mensagem = document.getElementById("mensagem");
+
+    let encerrado = false;
+
+    // Faz a tela ficar preta ao encerrar.
+    function encerrar() {
+      if (encerrado) return;
+
+      encerrado = true;
+      document.body.className = "encerrado";
+      document.getElementById("app").style.display = "none";
+      morse.classList.add("oculto");
+    }
+
+    // MORSE: aparece nos primeiros 10 segundos.
+    // Permanece visível por 5 a 10 segundos.
+    // Não reaparece sem recarregar a página.
+    const atrasoMorse = Math.random() * 10000;
+    const duracaoMorse = 5000 + Math.random() * 5000;
+
+    setTimeout(() => {
+      if (encerrado || tela1.classList.contains("oculto")) {
+        return;
+      }
+
+      // Posição aleatória, mantendo a mensagem na tela.
+      morse.style.left =
+        Math.random() * Math.max(
+          0, window.innerWidth - 300
+        ) + "px";
+
+      morse.style.top =
+        Math.random() * Math.max(
+          0, window.innerHeight - 100
+        ) + "px";
+
+      morse.classList.remove("oculto");
+
+      setTimeout(() => {
+        morse.classList.add("oculto");
+      }, duracaoMorse);
+
+    }, atrasoMorse);
+
+
+    // PRIMEIRA RESPOSTA: KAE'EV
+    form1.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const resposta = resposta1.value.trim().toLowerCase();
+
+      if (resposta !== "kae'ev") {
+        resposta1.value = "";
+        resposta1.placeholder = "Resposta incorreta.";
+        return;
+      }
+
+      morse.classList.add("oculto");
+      tela1.classList.add("oculto");
+
+      // Cores em intervalos de um segundo.
+      document.body.className = "cor-rosa";
+
+      setTimeout(() => {
+        if (encerrado) return;
+        document.body.className = "cor-laranja";
+      }, 1000);
+
+      setTimeout(() => {
+        if (encerrado) return;
+        document.body.className = "cor-azul";
+      }, 2000);
+
+      setTimeout(() => {
+        if (encerrado) return;
+
+        document.body.className = "";
+        tela2.classList.remove("oculto");
+        resposta2.focus();
+      }, 3000);
     });
-    container.appendChild(col);
-  });
 
-  function drawLines(){
-    svg.innerHTML = "";
-    const wrapRect = container.getBoundingClientRect();
-    svg.setAttribute("width", container.scrollWidth);
-    svg.setAttribute("height", container.scrollHeight);
-    data.connections.forEach(([fromId,toId])=>{
-      const from = document.getElementById(fromId);
-      const to = document.getElementById(toId);
-      if(!from || !to) return;
-      const fr = from.getBoundingClientRect(), tr = to.getBoundingClientRect();
-      const x1 = fr.right - wrapRect.left, y1 = fr.top + fr.height/2 - wrapRect.top;
-      const x2 = tr.left - wrapRect.left, y2 = tr.top + tr.height/2 - wrapRect.top;
-      const midX = (x1+x2)/2;
-      const path = document.createElementNS("http://www.w3.org/2000/svg","path");
-      path.setAttribute("d", `M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`);
-      svg.appendChild(path);
+
+    // SEGUNDA RESPOSTA: IZA
+    form2.addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const resposta = resposta2.value.trim().toUpperCase();
+
+      if (resposta !== "IZA") {
+        encerrar();
+        return;
+      }
+
+      tela2.classList.add("oculto");
+      telaFinal.classList.remove("oculto");
+
+      mensagem.textContent =
+        "האמת, אף פעם לא רציתי שתדעי. " +
+        "לראות אותך היה נפלא, אבל למה אני מרגישה כל כך הרבה כאב? " +
+        "אני כל כך מצטערת על זה. רציתי לפגוש אותך שוב... " +
+        "לראות את השיער שלך ולהיות איתך. " +
+        "מה שאני מרגישה הכי הרבה זה את הכאב של לראות אותך " +
+        "ואפילו לא להיות מסוגלת לדבר. " +
+        "אהבתי אותך, אני לא רוצה יותר אף אחד אחר, אפילו ויתרתי.";
+
+      // Depois de 10 segundos, encerra a experiência.
+      setTimeout(() => {
+        encerrar();
+      }, 10000);
     });
-  }
-  requestAnimationFrame(drawLines);
-  window.addEventListener("resize", drawLines);
-  return drawLines;
-}
-
-const drawFutsal = renderBracket(futsal, "futsal-bracket");
-const drawVolei = renderBracket(volei, "volei-bracket");
-
-document.getElementById("futsal-note").textContent =
-  "Jogos 1, 2, 5 e 6 de segunda valem para futsal e basquete X3; 3 e 4 são somente futsal. Times da final ainda não definidos na tabela oficial.";
-document.getElementById("volei-note").textContent =
-  "O vôlei misto segue formato de cruzamento entre grupos (A a F), não eliminação direta. As finais de todas as modalidades ocorrem na sexta-feira, após o recreio.";
-
-// Tabs
-document.querySelectorAll(".tab").forEach(tab=>{
-  tab.addEventListener("click", ()=>{
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    document.querySelectorAll(".bracket-wrap").forEach(w=>w.classList.remove("active"));
-    tab.classList.add("active");
-    const target = document.getElementById(tab.dataset.target);
-    target.classList.add("active");
-    if(tab.dataset.target === "futsal") drawFutsal(); else drawVolei();
-  });
-});
-</script>
+  </script>
 </body>
 </html>
