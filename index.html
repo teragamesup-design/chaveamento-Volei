@@ -4,9 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport"
-        content="width=device-width, initial-scale=1.0,
-        maximum-scale=1.0, user-scalable=no">
-
+        content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#000000">
   <title>Enigma</title>
 
@@ -19,13 +17,13 @@
       margin: 0;
       min-height: 100vh;
       min-height: 100dvh;
+      padding: 24px;
       background: #000;
       color: #39ff14;
       font-family: monospace;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
     }
 
     #app {
@@ -34,8 +32,11 @@
       text-align: center;
     }
 
+    .oculto {
+      display: none !important;
+    }
+
     #foto {
-      display: block;
       width: 100%;
       max-height: 360px;
       object-fit: cover;
@@ -46,84 +47,127 @@
     input {
       display: block;
       width: 100%;
+      padding: 15px;
+      margin-bottom: 14px;
       background: #050505;
       color: #39ff14;
       border: 1px solid #228b22;
       border-radius: 8px;
-      padding: 15px;
-      outline: none;
       font-family: monospace;
       font-size: 16px;
-      margin-bottom: 14px;
-    }
-
-    input:focus {
-      border-color: #39ff14;
     }
 
     button {
-      width: 100%;
-      background: #102010;
-      color: #39ff14;
-      border: 1px solid #39ff14;
-      border-radius: 8px;
-      padding: 14px;
-      font-family: monospace;
-      font-size: 15px;
       cursor: pointer;
+      font-family: monospace;
     }
 
-    button:active {
-      background: #204020;
+    .confirmar {
+      width: 100%;
+      padding: 14px;
+      color: #39ff14;
+      background: #102010;
+      border: 1px solid #39ff14;
+      border-radius: 8px;
     }
 
     #morse {
       position: fixed;
       z-index: 10;
       max-width: 90vw;
+      padding: 9px;
       color: #39ff14;
       background: #000;
       border: 1px solid #174b17;
-      padding: 9px;
       font-size: 13px;
       overflow-wrap: anywhere;
     }
 
-    #mensagem {
-      color: #39ff14;
-      font-family: monospace;
-      font-size: 16px;
-      line-height: 1.9;
-      white-space: pre-wrap;
+    /* ENIGMA DAS CORES */
+
+    #palavra {
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      letter-spacing: 5px;
+      color: #fff;
       overflow-wrap: anywhere;
-      direction: rtl;
-      text-align: center;
     }
 
-    .encerrado {
-      background: #000 !important;
-      color: #000 !important;
+    #botoesCores {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 25px;
     }
 
-    .encerrado #app {
-      display: none;
+    .cor {
+      min-height: 75px;
+      border: 2px solid #555;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
     }
 
-    .oculto {
-      display: none !important;
+    .azul {
+      background: #0000ff;
+      color: white;
     }
 
-    /* As cores são sólidas, sem animação. */
+    .vermelho {
+      background: #ff0000;
+      color: white;
+    }
+
+    .amarelo {
+      background: #ffff00;
+      color: black;
+    }
+
+    .verde {
+      background: #008000;
+      color: white;
+    }
+
+    .branco {
+      background: #ffffff;
+      color: black;
+    }
+
+    /* CORES DA TRANSIÇÃO */
+
     body.cor-rosa {
-      background: #F5A9C8;
+      background: #f5a9c8;
     }
 
     body.cor-laranja {
-      background: #E9742B;
+      background: #e9742b;
     }
 
     body.cor-azul {
-      background: #0000FF;
+      background: #0000ff;
+    }
+
+    /* MENSAGEM FINAL */
+
+    #mensagem {
+      color: #39ff14;
+      font-size: 16px;
+      line-height: 1.9;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+      text-align: center;
+      direction: rtl;
+    }
+
+    body.encerrado {
+      background: #000 !important;
+    }
+
+    body.encerrado #app {
+      display: none;
     }
   </style>
 </head>
@@ -131,45 +175,66 @@
 <body>
   <main id="app">
 
-    <!-- PRIMEIRA TELA -->
+    <!-- TELA 1 -->
     <section id="tela1">
       <img id="foto" src="foto1.png" alt="">
 
       <form id="form1">
-        <input
-          id="resposta1"
-          type="text"
-          placeholder="Digite sua resposta..."
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-          required
-        >
+        <input id="resposta1"
+               placeholder="Digite sua resposta..."
+               autocomplete="off"
+               autocapitalize="off"
+               required>
 
-        <button type="submit">CONFIRMAR</button>
+        <button class="confirmar" type="submit">
+          CONFIRMAR
+        </button>
       </form>
     </section>
 
-    <!-- MENSAGEM EM MORSE -->
+    <!-- CÓDIGO MORSE -->
     <div id="morse" class="oculto">
       -. --- / --- .-.. .... . / -- .. -. .... .- / -... .. ---
     </div>
 
-    <!-- SEGUNDA TELA -->
+    <!-- TELA 2 -->
     <section id="tela2" class="oculto">
       <form id="form2">
-        <input
-          id="resposta2"
-          type="text"
-          placeholder="..."
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-          required
-        >
+        <input id="resposta2"
+               placeholder="..."
+               autocomplete="off"
+               autocapitalize="off"
+               required>
 
-        <button type="submit">CONFIRMAR</button>
+        <button class="confirmar" type="submit">
+          CONFIRMAR
+        </button>
       </form>
+    </section>
+
+    <!-- TELA 3: ENIGMA DAS CORES -->
+    <section id="telaCores" class="oculto">
+
+      <div id="palavra"></div>
+
+      <div id="botoesCores" class="oculto">
+
+        <button class="cor azul"
+                data-cor="azul">AZUL</button>
+
+        <button class="cor vermelho"
+                data-cor="vermelho">VERMELHO</button>
+
+        <button class="cor amarelo"
+                data-cor="amarelo">AMARELO</button>
+
+        <button class="cor verde"
+                data-cor="verde">VERDE</button>
+
+        <button class="cor branco"
+                data-cor="branco">BRANCO</button>
+
+      </div>
     </section>
 
     <!-- MENSAGEM FINAL -->
@@ -180,43 +245,47 @@
   </main>
 
   <script>
-    const tela1 = document.getElementById("tela1");
-    const tela2 = document.getElementById("tela2");
-    const telaFinal = document.getElementById("telaFinal");
+    const $ = id => document.getElementById(id);
 
-    const form1 = document.getElementById("form1");
-    const form2 = document.getElementById("form2");
+    const tela1 = $("tela1");
+    const tela2 = $("tela2");
+    const telaCores = $("telaCores");
+    const telaFinal = $("telaFinal");
 
-    const resposta1 = document.getElementById("resposta1");
-    const resposta2 = document.getElementById("resposta2");
-
-    const morse = document.getElementById("morse");
-    const mensagem = document.getElementById("mensagem");
+    const morse = $("morse");
+    const palavra = $("palavra");
+    const botoesCores = $("botoesCores");
+    const mensagem = $("mensagem");
 
     let encerrado = false;
+    let etapaCores = 0;
 
-    // Faz a tela ficar preta ao encerrar.
+    const combinacao = [
+      "amarelo",
+      "branco",
+      "verde",
+      "verde"
+    ];
+
     function encerrar() {
       if (encerrado) return;
 
       encerrado = true;
       document.body.className = "encerrado";
-      document.getElementById("app").style.display = "none";
+      $("app").style.display = "none";
       morse.classList.add("oculto");
     }
 
-    // MORSE: aparece nos primeiros 10 segundos.
-    // Permanece visível por 5 a 10 segundos.
-    // Não reaparece sem recarregar a página.
+    // MORSE: aparece uma vez por carregamento.
     const atrasoMorse = Math.random() * 10000;
     const duracaoMorse = 5000 + Math.random() * 5000;
 
     setTimeout(() => {
-      if (encerrado || tela1.classList.contains("oculto")) {
+      if (encerrado ||
+          tela1.classList.contains("oculto")) {
         return;
       }
 
-      // Posição aleatória, mantendo a mensagem na tela.
       morse.style.left =
         Math.random() * Math.max(
           0, window.innerWidth - 300
@@ -236,32 +305,34 @@
     }, atrasoMorse);
 
 
-    // PRIMEIRA RESPOSTA: KAE'EV
-    form1.addEventListener("submit", function(event) {
+    // PRIMEIRO ENIGMA: KAE'EV
+    $("form1").addEventListener("submit", event => {
       event.preventDefault();
 
-      const resposta = resposta1.value.trim().toLowerCase();
+      const resposta =
+        $("resposta1").value.trim().toLowerCase();
 
       if (resposta !== "kae'ev") {
-        resposta1.value = "";
-        resposta1.placeholder = "Resposta incorreta.";
+        $("resposta1").value = "";
+        $("resposta1").placeholder = "Resposta incorreta.";
         return;
       }
 
       morse.classList.add("oculto");
       tela1.classList.add("oculto");
 
-      // Cores em intervalos de um segundo.
       document.body.className = "cor-rosa";
 
       setTimeout(() => {
-        if (encerrado) return;
-        document.body.className = "cor-laranja";
+        if (!encerrado) {
+          document.body.className = "cor-laranja";
+        }
       }, 1000);
 
       setTimeout(() => {
-        if (encerrado) return;
-        document.body.className = "cor-azul";
+        if (!encerrado) {
+          document.body.className = "cor-azul";
+        }
       }, 2000);
 
       setTimeout(() => {
@@ -269,16 +340,17 @@
 
         document.body.className = "";
         tela2.classList.remove("oculto");
-        resposta2.focus();
+        $("resposta2").focus();
       }, 3000);
     });
 
 
-    // SEGUNDA RESPOSTA: IZA
-    form2.addEventListener("submit", function(event) {
+    // SEGUNDO ENIGMA: IZA
+    $("form2").addEventListener("submit", event => {
       event.preventDefault();
 
-      const resposta = resposta2.value.trim().toUpperCase();
+      const resposta =
+        $("resposta2").value.trim().toUpperCase();
 
       if (resposta !== "IZA") {
         encerrar();
@@ -286,6 +358,86 @@
       }
 
       tela2.classList.add("oculto");
+      telaCores.classList.remove("oculto");
+
+      iniciarSequencia();
+    });
+
+
+    // SEQUÊNCIA DE PALAVRAS
+    function iniciarSequencia() {
+      etapaCores = 0;
+
+      botoesCores.classList.add("oculto");
+      palavra.classList.remove("oculto");
+
+      document.body.className = "";
+      palavra.textContent = "";
+
+      // Cada palavra dura 500 milissegundos.
+      setTimeout(() => {
+        if (encerrado) return;
+        palavra.textContent = "tzahov";
+      }, 100);
+
+      setTimeout(() => {
+        if (encerrado) return;
+        palavra.textContent = "levan";
+      }, 600);
+
+      setTimeout(() => {
+        if (encerrado) return;
+        palavra.textContent = "yarok";
+      }, 1100);
+
+      // Pequeno apagão preto entre os dois "yarok".
+      setTimeout(() => {
+        if (encerrado) return;
+        palavra.textContent = "";
+        document.body.style.background = "#000";
+      }, 1600);
+
+      setTimeout(() => {
+        if (encerrado) return;
+        palavra.textContent = "yarok";
+      }, 1850);
+
+      // Os botões só aparecem depois das palavras.
+      setTimeout(() => {
+        if (encerrado) return;
+
+        palavra.classList.add("oculto");
+        botoesCores.classList.remove("oculto");
+      }, 2350);
+    }
+
+
+    // TERCEIRO ENIGMA: SEQUÊNCIA DE CORES
+    botoesCores.addEventListener("click", event => {
+      const botao = event.target.closest("button[data-cor]");
+
+      if (!botao || encerrado) return;
+
+      const corEscolhida = botao.dataset.cor;
+
+      if (corEscolhida === combinacao[etapaCores]) {
+        etapaCores++;
+
+        // Quatro respostas corretas: revelar mensagem.
+        if (etapaCores === combinacao.length) {
+          mostrarMensagemFinal();
+        }
+
+      } else {
+        // Errou: reinicia a sequência de palavras.
+        iniciarSequencia();
+      }
+    });
+
+
+    // REVELAÇÃO DA MENSAGEM FINAL
+    function mostrarMensagemFinal() {
+      telaCores.classList.add("oculto");
       telaFinal.classList.remove("oculto");
 
       mensagem.textContent =
@@ -297,11 +449,10 @@
         "ואפילו לא להיות מסוגלת לדבר. " +
         "אהבתי אותך, אני לא רוצה יותר אף אחד אחר, אפילו ויתרתי.";
 
-      // Depois de 10 segundos, encerra a experiência.
       setTimeout(() => {
         encerrar();
       }, 10000);
-    });
+    }
   </script>
 </body>
 </html>
