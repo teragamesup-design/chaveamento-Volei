@@ -3,8 +3,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#000000">
   <title>Enigma</title>
 
@@ -45,10 +44,9 @@
     }
 
     input {
-      display: block;
       width: 100%;
       padding: 15px;
-      margin-bottom: 14px;
+      margin: 12px 0;
       background: #050505;
       color: #39ff14;
       border: 1px solid #228b22;
@@ -65,8 +63,8 @@
     .confirmar {
       width: 100%;
       padding: 14px;
-      color: #39ff14;
       background: #102010;
+      color: #39ff14;
       border: 1px solid #39ff14;
       border-radius: 8px;
     }
@@ -76,23 +74,50 @@
       z-index: 10;
       max-width: 90vw;
       padding: 9px;
-      color: #39ff14;
       background: #000;
+      color: #39ff14;
       border: 1px solid #174b17;
       font-size: 13px;
       overflow-wrap: anywhere;
     }
 
-    /* ENIGMA DAS CORES */
+    /* PISTA DAS TRÊS CORES */
+
+    #letra {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 100px;
+      font-weight: bold;
+      pointer-events: none;
+    }
+
+    body.rosa {
+      background: #F5A9C8;
+    }
+
+    body.laranja {
+      background: #E9742B;
+    }
+
+    body.azul {
+      background: #0000FF;
+    }
+
+    /* ENIGMA DE CORES */
 
     #palavra {
       min-height: 100px;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
+      color: white;
       font-size: 36px;
-      letter-spacing: 5px;
-      color: #fff;
+      letter-spacing: 4px;
       overflow-wrap: anywhere;
     }
 
@@ -100,70 +125,63 @@
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 14px;
-      margin-top: 25px;
+      margin-top: 24px;
     }
 
     .cor {
       min-height: 75px;
       border: 2px solid #555;
       border-radius: 10px;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: bold;
     }
 
-    .azul {
+    .cor.azul {
       background: #0000ff;
       color: white;
     }
 
-    .vermelho {
+    .cor.vermelho {
       background: #ff0000;
       color: white;
     }
 
-    .amarelo {
+    .cor.amarelo {
       background: #ffff00;
       color: black;
     }
 
-    .verde {
+    .cor.verde {
       background: #008000;
       color: white;
     }
 
-    .branco {
-      background: #ffffff;
+    .cor.branco {
+      background: white;
       color: black;
     }
 
-    /* CORES DA TRANSIÇÃO */
+    /* NOVA CHARADA */
 
-    body.cor-rosa {
-      background: #f5a9c8;
+    #pergunta {
+      color: #39ff14;
+      font-size: 15px;
+      line-height: 1.9;
+      white-space: pre-line;
+      margin-bottom: 18px;
     }
-
-    body.cor-laranja {
-      background: #e9742b;
-    }
-
-    body.cor-azul {
-      background: #0000ff;
-    }
-
-    /* MENSAGEM FINAL */
 
     #mensagem {
       color: #39ff14;
       font-size: 16px;
       line-height: 1.9;
-      overflow-wrap: anywhere;
       white-space: pre-wrap;
-      text-align: center;
+      overflow-wrap: anywhere;
       direction: rtl;
     }
 
     body.encerrado {
-      background: #000 !important;
+      background: black !important;
     }
 
     body.encerrado #app {
@@ -181,60 +199,69 @@
 
       <form id="form1">
         <input id="resposta1"
-               placeholder="Digite sua resposta..."
-               autocomplete="off"
-               autocapitalize="off"
-               required>
+          placeholder="Digite sua resposta..."
+          autocomplete="off"
+          autocapitalize="off"
+          required>
 
-        <button class="confirmar" type="submit">
-          CONFIRMAR
-        </button>
+        <button class="confirmar">CONFIRMAR</button>
       </form>
     </section>
 
-    <!-- CÓDIGO MORSE -->
+    <!-- MORSE -->
     <div id="morse" class="oculto">
       -. --- / --- .-.. .... . / -- .. -. .... .- / -... .. ---
     </div>
 
-    <!-- TELA 2 -->
+    <!-- RESPOSTA IZA -->
     <section id="tela2" class="oculto">
       <form id="form2">
         <input id="resposta2"
-               placeholder="..."
-               autocomplete="off"
-               autocapitalize="off"
-               required>
+          placeholder="..."
+          autocomplete="off"
+          autocapitalize="off"
+          required>
 
-        <button class="confirmar" type="submit">
-          CONFIRMAR
-        </button>
+        <button class="confirmar">CONFIRMAR</button>
       </form>
     </section>
 
-    <!-- TELA 3: ENIGMA DAS CORES -->
-    <section id="telaCores" class="oculto">
+    <!-- PISTA VISUAL: И З А -->
+    <div id="letra" class="oculto"></div>
 
+    <!-- ENIGMA DAS CORES -->
+    <section id="telaCores" class="oculto">
       <div id="palavra"></div>
 
       <div id="botoesCores" class="oculto">
-
-        <button class="cor azul"
-                data-cor="azul">AZUL</button>
-
-        <button class="cor vermelho"
-                data-cor="vermelho">VERMELHO</button>
-
-        <button class="cor amarelo"
-                data-cor="amarelo">AMARELO</button>
-
-        <button class="cor verde"
-                data-cor="verde">VERDE</button>
-
-        <button class="cor branco"
-                data-cor="branco">BRANCO</button>
-
+        <button class="cor azul" data-cor="azul">AZUL</button>
+        <button class="cor vermelho" data-cor="vermelho">VERMELHO</button>
+        <button class="cor amarelo" data-cor="amarelo">AMARELO</button>
+        <button class="cor verde" data-cor="verde">VERDE</button>
+        <button class="cor branco" data-cor="branco">BRANCO</button>
       </div>
+    </section>
+
+    <!-- CHARADA DA JUVENTUDE -->
+    <section id="telaCharada" class="oculto">
+      <div id="pergunta">Tenho o vigor do amanhã, mas trago a pressa do agora.
+Fiquei para trás na infância, mas o futuro me namora.
+
+Muitos me querem de volta quando o tempo passe e consome, mas enquanto estou presente, a energia é o meu nome.
+
+Não sou o início da vida, nem o fim da caminhada, estou bem no meio do mapa, na fase mais cobiçada.
+
+Quem sou eu?</div>
+
+      <form id="formCharada">
+        <input id="respostaCharada"
+          placeholder="Sua resposta..."
+          autocomplete="off"
+          autocapitalize="off"
+          required>
+
+        <button class="confirmar">CONFIRMAR</button>
+      </form>
     </section>
 
     <!-- MENSAGEM FINAL -->
@@ -246,16 +273,6 @@
 
   <script>
     const $ = id => document.getElementById(id);
-
-    const tela1 = $("tela1");
-    const tela2 = $("tela2");
-    const telaCores = $("telaCores");
-    const telaFinal = $("telaFinal");
-
-    const morse = $("morse");
-    const palavra = $("palavra");
-    const botoesCores = $("botoesCores");
-    const mensagem = $("mensagem");
 
     let encerrado = false;
     let etapaCores = 0;
@@ -273,7 +290,20 @@
       encerrado = true;
       document.body.className = "encerrado";
       $("app").style.display = "none";
-      morse.classList.add("oculto");
+      $("morse").classList.add("oculto");
+      $("letra").classList.add("oculto");
+    }
+
+    function mostrarTela(id) {
+      [
+        "tela1",
+        "tela2",
+        "telaCores",
+        "telaCharada",
+        "telaFinal"
+      ].forEach(tela => $(tela).classList.add("oculto"));
+
+      $(id).classList.remove("oculto");
     }
 
     // MORSE: aparece uma vez por carregamento.
@@ -282,30 +312,23 @@
 
     setTimeout(() => {
       if (encerrado ||
-          tela1.classList.contains("oculto")) {
-        return;
-      }
+          $("tela1").classList.contains("oculto")) return;
 
-      morse.style.left =
-        Math.random() * Math.max(
-          0, window.innerWidth - 300
-        ) + "px";
+      $("morse").style.left =
+        Math.random() * Math.max(0, innerWidth - 300) + "px";
 
-      morse.style.top =
-        Math.random() * Math.max(
-          0, window.innerHeight - 100
-        ) + "px";
+      $("morse").style.top =
+        Math.random() * Math.max(0, innerHeight - 100) + "px";
 
-      morse.classList.remove("oculto");
+      $("morse").classList.remove("oculto");
 
       setTimeout(() => {
-        morse.classList.add("oculto");
+        $("morse").classList.add("oculto");
       }, duracaoMorse);
-
     }, atrasoMorse);
 
 
-    // PRIMEIRO ENIGMA: KAE'EV
+    // PRIMEIRA RESPOSTA: KAE'EV
     $("form1").addEventListener("submit", event => {
       event.preventDefault();
 
@@ -318,34 +341,44 @@
         return;
       }
 
-      morse.classList.add("oculto");
-      tela1.classList.add("oculto");
+      $("morse").classList.add("oculto");
+      mostrarTela("tela2");
+      $("tela2").classList.add("oculto");
 
-      document.body.className = "cor-rosa";
+      const letra = $("letra");
+      letra.classList.remove("oculto");
 
+      // Rosa: И
+      document.body.className = "rosa";
+      letra.textContent = "И";
+
+      // Laranja: З
       setTimeout(() => {
-        if (!encerrado) {
-          document.body.className = "cor-laranja";
-        }
+        if (encerrado) return;
+        document.body.className = "laranja";
+        letra.textContent = "З";
       }, 1000);
 
+      // Azul: А
       setTimeout(() => {
-        if (!encerrado) {
-          document.body.className = "cor-azul";
-        }
+        if (encerrado) return;
+        document.body.className = "azul";
+        letra.textContent = "А";
       }, 2000);
 
+      // Depois, aparece a caixa para digitar IZA.
       setTimeout(() => {
         if (encerrado) return;
 
         document.body.className = "";
-        tela2.classList.remove("oculto");
+        letra.classList.add("oculto");
+        mostrarTela("tela2");
         $("resposta2").focus();
       }, 3000);
     });
 
 
-    // SEGUNDO ENIGMA: IZA
+    // SEGUNDA RESPOSTA: IZA
     $("form2").addEventListener("submit", event => {
       event.preventDefault();
 
@@ -357,9 +390,7 @@
         return;
       }
 
-      tela2.classList.add("oculto");
-      telaCores.classList.remove("oculto");
-
+      mostrarTela("telaCores");
       iniciarSequencia();
     });
 
@@ -368,79 +399,83 @@
     function iniciarSequencia() {
       etapaCores = 0;
 
-      botoesCores.classList.add("oculto");
-      palavra.classList.remove("oculto");
-
+      $("botoesCores").classList.add("oculto");
+      $("palavra").classList.remove("oculto");
+      $("palavra").textContent = "";
       document.body.className = "";
-      palavra.textContent = "";
 
-      // Cada palavra dura 500 milissegundos.
       setTimeout(() => {
-        if (encerrado) return;
-        palavra.textContent = "tzahov";
+        if (!encerrado) $("palavra").textContent = "tzahov";
       }, 100);
 
       setTimeout(() => {
-        if (encerrado) return;
-        palavra.textContent = "levan";
+        if (!encerrado) $("palavra").textContent = "levan";
       }, 600);
 
       setTimeout(() => {
-        if (encerrado) return;
-        palavra.textContent = "yarok";
+        if (!encerrado) $("palavra").textContent = "yarok";
       }, 1100);
 
-      // Pequeno apagão preto entre os dois "yarok".
       setTimeout(() => {
-        if (encerrado) return;
-        palavra.textContent = "";
-        document.body.style.background = "#000";
+        if (!encerrado) $("palavra").textContent = "";
       }, 1600);
 
       setTimeout(() => {
-        if (encerrado) return;
-        palavra.textContent = "yarok";
+        if (!encerrado) $("palavra").textContent = "yarok";
       }, 1850);
 
-      // Os botões só aparecem depois das palavras.
       setTimeout(() => {
         if (encerrado) return;
 
-        palavra.classList.add("oculto");
-        botoesCores.classList.remove("oculto");
+        $("palavra").classList.add("oculto");
+        $("botoesCores").classList.remove("oculto");
       }, 2350);
     }
 
 
-    // TERCEIRO ENIGMA: SEQUÊNCIA DE CORES
-    botoesCores.addEventListener("click", event => {
-      const botao = event.target.closest("button[data-cor]");
+    // COMBINAÇÃO: AMARELO, BRANCO, VERDE, VERDE
+    $("botoesCores").addEventListener("click", event => {
+      const botao = event.target.closest("[data-cor]");
 
       if (!botao || encerrado) return;
 
-      const corEscolhida = botao.dataset.cor;
-
-      if (corEscolhida === combinacao[etapaCores]) {
+      if (botao.dataset.cor === combinacao[etapaCores]) {
         etapaCores++;
 
-        // Quatro respostas corretas: revelar mensagem.
         if (etapaCores === combinacao.length) {
-          mostrarMensagemFinal();
+          mostrarTela("telaCharada");
+          $("respostaCharada").focus();
         }
-
       } else {
-        // Errou: reinicia a sequência de palavras.
         iniciarSequencia();
       }
     });
 
 
-    // REVELAÇÃO DA MENSAGEM FINAL
-    function mostrarMensagemFinal() {
-      telaCores.classList.add("oculto");
-      telaFinal.classList.remove("oculto");
+    // CHARADA: JOVEM OU JUVENTUDE
+    $("formCharada").addEventListener("submit", event => {
+      event.preventDefault();
 
-      mensagem.textContent =
+      const resposta = $("respostaCharada")
+        .value.trim()
+        .toLocaleLowerCase("pt-BR")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+
+      if (resposta === "jovem" || resposta === "juventude") {
+        mostrarMensagemFinal();
+      } else {
+        $("respostaCharada").value = "";
+        $("respostaCharada").placeholder = "Tente novamente...";
+      }
+    });
+
+
+    // MENSAGEM FINAL
+    function mostrarMensagemFinal() {
+      mostrarTela("telaFinal");
+
+      $("mensagem").textContent =
         "האמת, אף פעם לא רציתי שתדעי. " +
         "לראות אותך היה נפלא, אבל למה אני מרגישה כל כך הרבה כאב? " +
         "אני כל כך מצטערת על זה. רציתי לפגוש אותך שוב... " +
