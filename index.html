@@ -187,6 +187,22 @@
     body.encerrado #app {
       display: none;
     }
+  
+    /* MINI-RPG */
+    #jogo{position:fixed;inset:0;z-index:50;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden}
+    #tela{position:relative;width:min(100vw,calc(100dvh*1.5));aspect-ratio:3/2;filter:grayscale(.6) contrast(.78) brightness(.92) blur(.4px)}
+    #cv{width:100%;height:100%;display:block;image-rendering:pixelated}
+    #crt{position:absolute;inset:0;pointer-events:none;animation:fl .12s infinite;background:repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 1px,transparent 1px 3px),radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.65))}
+    @keyframes fl{50%{opacity:.88}}
+    #tela.gl{animation:gl .35s steps(2)}
+    @keyframes gl{20%{transform:translate(-6px,2px) skewX(6deg);filter:invert(.15) contrast(1.8)}50%{transform:translate(5px,-3px)}80%{transform:translate(-3px,1px) skewX(-4deg)}}
+    #fd{position:absolute;inset:0;background:#000;opacity:1;transition:opacity .7s;pointer-events:none;z-index:2}
+    #av{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;padding:20px;text-align:center;color:#cfd8cf;font-family:monospace}
+    #pad{position:absolute;left:0;right:0;bottom:16px;display:none;justify-content:space-between;align-items:flex-end;padding:0 16px;z-index:60}
+    #pad button{width:54px;height:54px;background:#ffffff1a;color:#cfd8cf;border:1px solid #ffffff44;border-radius:10px;font-size:20px;touch-action:none}
+    #dp{display:grid;grid-template:repeat(3,54px)/repeat(3,54px);gap:4px}
+    #pad .z{width:68px;height:68px;border-radius:50%}
+    @media(pointer:coarse){#pad{display:flex}}
   </style>
 </head>
 
@@ -270,6 +286,9 @@ Quem sou eu?</div>
     </section>
 
   </main>
+
+  <div id="jogo" class="oculto"><div id="tela"><canvas id="cv" width="240" height="160"></canvas><div id="crt"></div><div id="av"></div><div id="fd"></div></div><div id="pad"><div id="dp"><i></i><button data-k="ArrowUp">▲</button><i></i><button data-k="ArrowLeft">◀</button><i></i><button data-k="ArrowRight">▶</button><i></i><button data-k="ArrowDown">▼</button><i></i></div><button class="z" data-k="z">Z</button></div></div>
+
 
   <script>
     const $ = id => document.getElementById(id);
@@ -463,13 +482,315 @@ Quem sou eu?</div>
         .replace(/[\u0300-\u036f]/g, "");
 
       if (resposta === "jovem" || resposta === "juventude") {
-        mostrarMensagemFinal();
+        iniciarJogo();
       } else {
         $("respostaCharada").value = "";
         $("respostaCharada").placeholder = "Tente novamente...";
       }
     });
 
+
+    // ===== MINI-RPG: entra depois da charada e termina na mensagem final =====
+    function iniciarJogo() {
+      $("app").style.display = "none";
+      document.body.className = "";
+      $("jogo").classList.remove("oculto");
+      JOGO.start();
+    }
+
+    const JOGO = (() => {
+      const W = 240, H = 160, c = $("cv").getContext("2d"), tela = $("tela"), fd = $("fd"), av = $("av");
+      const BC = { V: "#2a2e2b", O: "#7e93b0", N: "#79a083", A: "#bcb169" };
+      const KM = { w: "u", arrowup: "u", a: "l", arrowleft: "l", s: "d", arrowdown: "d", d: "r", arrowright: "r", z: "z", enter: "z", " ": "z" };
+      const AU = {}, K = {}, cnt = {};
+      let mu = null, ph = null, rm = "q", px = 32, py = 68, al = 1, ring = 0, tl = 0, ly = 1, fx = 1, run = 0, fr = 0, cd = 0;
+      let q = [], cur = null, ci = 0, dn = null;
+      let party = [], hist = [], dark = 0, joined = 0, zb = null, stp = null, cx = 0, cy = 0, sq = 0; const ev = {};
+
+      const snd = (n, l) => { try { const a = AU[n] || (AU[n] = new Audio(n + ".mp3")); a.loop = !!l; a.currentTime = 0; a.play().catch(() => {}); return a; } catch (e) {} };
+      const mus = n => { try { mu && mu.pause(); } catch (e) {} mu = n ? snd(n, 1) : null; };
+      const wait = ms => new Promise(r => setTimeout(r, ms));
+      const glitch = () => { snd("bug1"); tela.classList.add("gl"); setTimeout(() => tela.classList.remove("gl"), 350); };
+      const ov = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+      const R = (x, y, w, h, o) => Object.assign({ x: x * 16, y: y * 16, w: w * 16, h: h * 16 }, o);
+      const T = (x, y, w, h) => R(x, y, w, h, { k: "T", z: 1 });
+
+      // n:1 = atravessável, d:1 = porta
+      const ROOMS = {
+        q: [R(1,2,3,2,{i:"cama",k:"b"}), R(4,2,1,1,{i:"desp",k:"r"}), R(7,0,2,2,{i:"janela",k:"j",n:1}), R(11,0,1,2,{i:"espelho",k:"e",n:1}), R(12,2,2,1,{i:"gaveta",k:"c"}), R(14,6,1,2,{i:"portaQ",d:1,n:1})],
+        s: [R(1,2,2,2,{i:"fogao",k:"f"}), R(5,0,2,2,{i:"janelas",k:"j",n:1}), R(3,1,1,1,{i:"tel",k:"t",n:1}), R(8,2,1,1,{i:"radio",k:"r"}), R(11,2,1,2,{i:"gel",k:"g"}), R(13,2,1,2,{i:"frutas",k:"c"}), R(6,5,3,2,{i:"mesa",k:"m"}), R(2,6,3,2,{i:"tapete",k:"p",n:1}), R(0,6,1,2,{i:"portaS",d:1,n:1}), R(6,9,2,1,{i:"saida",d:1,n:1})],
+        e: [T(4,2,2,2), T(10,2,2,2), T(17,2,2,2), T(24,2,2,2), T(31,2,2,2), T(40,2,3,2), T(7,7,2,2), T(14,8,2,1), T(21,7,2,2), T(28,8,2,1), T(35,7,2,2), T(41,7,2,2), R(12,5,3,1,{i:"cerca",k:"c"}), R(21,4,1,2,{i:"espantalho",k:"c"}), R(27,5,2,2,{i:"poco",k:"c"}), R(36,4,1,1,{i:"kana",k:"N"}), R(45,6,1,2,{i:"portaE",d:1,n:1})],
+        n: [T(4,2,2,3), T(9,2,3,3), T(16,2,2,3), T(22,2,3,3), T(29,2,2,3), T(6,8,3,3), T(13,9,2,2), T(19,8,3,3), T(26,9,2,2), T(31,8,3,3), R(14,5,3,2,{i:"gruta",k:"w"}), R(24,6,1,1,{i:"pano",k:"B",n:1}), R(35,6,1,2,{i:"portaN",d:1,n:1})],
+        f: [R(8,3,1,3,{i:"arv1",k:"m"}), R(12,7,1,3,{i:"arv2",k:"m"}), R(16,4,1,3,{i:"arv3",k:"m"}), R(19,8,1,3,{i:"arv4",k:"m"}), T(5,9,2,2), T(10,3,2,2), T(14,10,2,2), T(17,10,2,2), R(22,2,2,11,{i:"mata",k:"M"}), T(26,4,2,2), T(28,9,2,2), T(32,2,2,4), T(32,8,2,5), R(32,6,2,2,{i:"teia",k:"s"}), T(36,3,2,2), T(37,9,2,2), R(44,4,3,1,{i:"peg1",k:"P",n:1}), R(44,9,3,1,{i:"peg2",k:"Q",n:1}), T(46,2,2,2), T(47,6,2,2), R(50,2,2,11,{i:"mata2",k:"M"}), T(54,3,2,2), T(55,9,2,2), R(59,6,1,2,{i:"portaF",d:1,n:1})],
+        l: [R(6,3,1,2,{i:"retalhos",k:"F"}), R(9,3,1,1,{i:"pedD",k:"O"}), R(9,5,1,1,{i:"pedG",k:"O"}), R(9,8,1,1,{i:"pedY",k:"O"}), R(9,10,1,1,{i:"pedB",k:"O"}), R(12,2,20,4,{i:"lago",k:"w"}), R(12,6,20,2,{i:"agua",k:"w"}), R(12,8,20,3,{k:"w",z:1}), R(36,4,1,1,{i:"lanterna",k:"L",n:1}), T(34,2,2,2), T(38,8,2,2), T(36,9,2,2), R(43,6,1,2,{i:"portaL",d:1,n:1})],
+        p: [T(4,2,2,2), T(9,3,2,2), T(13,2,3,2), T(18,9,2,2), T(24,2,2,3), T(23,8,3,3), T(28,9,2,2), T(34,2,3,2), T(35,9,2,2), T(6,8,3,2), R(30,4,1,3,{k:"S",n:1,z:1}), R(33,5,1,1,{i:"pedra",k:"R"}), R(36,6,1,1,{i:"bilhete",k:"B",n:1})]
+      };
+      const RM = () => ROOMS[rm];
+      const OUT = { e: 1, n: 1, f: 1, l: 1, p: 1 }, DK = { e: .08, n: .3, f: .45, l: .5, p: .55 };
+      const MEET = ["N:Tranquilo, jovem? Tô esperando os outros.", "V:E a vida, como tá?", "N:Quieta. A casa tá em ordem, só falta gente nela. E a sua?", "V:Tem estado... cheia de silêncio.", "N:Conheço esse tipo.", "!j", "O:Olha quem saiu da toca!", "O:Então, galera: hoje a gente descobre se os rumores são de verdade.", "O:Os gritos, os choros à noite, lá na Neshiyah.", "A:...Não. De jeito nenhum. Eu não entro lá.", "O:Prefere ficar sozinho aqui quando escurecer?", "N:Ninguém se separa. A gente decora o caminho de volta e pronto.", "V:Eu quero ouvir.", "A:...Tá. Mas se alguma coisa acontecer, a culpa é de vocês."];
+      const HEAVY = ["O:Falta pouco. Dá pra sentir a água daqui.", "N:Ninguém se separa. Ninguém."];
+      const POEM = "P:O tempo não anda, capota —\nassim como capotei em meus sonhos e desejos.\n\nDesejos que fracassei no peito,\nna dor em que senti aquilo que mais me arde.\nPois olhá-la\n\né como destruir uma arte.";
+      const ENT = {
+        e: ["V:Kana'a, eu vejo você! Opa!"],
+        n: ["(A grama está morta. Toda.)", "N:Não foi boa ideia vir de tarde. A gente devia voltar amanhã de manhã.", "A:É! Amanhã de manhã! Eu apoio!", "O:De dia a gente não vai conseguir escutar os gritos, né?", "?:...", "V:...Vamos.", "N:Aqui não tem placa de perigo. Quem entra já sabe."],
+        p: ["?:...", "O:Ka'as?", "O:Ka'as, para com isso. Não tem graça.", "O:...Não. Não, não, não.", "N:Não olha.", "(O zumbido ficou mais alto do que a minha voz.)", "O:A gente decorou o caminho de volta. Você disse que a gente decorou.", "N:...Decorei. Mas não é mais o mesmo caminho."]
+      };
+      const MS = { e: [46, 10], n: [36, 12], f: [60, 14], l: [44, 12], p: [40, 12] };
+      const MW = () => (MS[rm] || [15, 10])[0] * 16, MH = () => (MS[rm] || [15, 10])[1] * 16;
+      const NM = { V: "Vêek", O: "Osher", N: "Kana'a", A: "Ka'as", "?": "???" };
+      const CUTS = { arv1: 2, arv2: 4, arv3: 3, arv4: 5 }, ORD = ["pedY", "pedB", "pedG", "pedD"], SC = { pedY: BC.A, pedB: BC.O, pedG: BC.N, pedD: BC.V };
+      const DISC = ["?:...", "O:Ka'as?", "O:Ka'as, para com isso. Não tem graça.", "O:...Não. Não, não, não.", "N:Não olha.", "(O zumbido ficou mais alto do que a minha voz.)", "O:Foi culpa minha. Eu que falei dos gritos.", "N:Não foi culpa de ninguém.", "(Foi. Eu quis ouvir. A culpa é minha.)", "O:A gente decorou o caminho de volta. Você disse que a gente decorou.", "N:...Decorei. Mas não é mais o mesmo caminho."];
+      ENT.p = ["?:...", "O:Tá silencioso demais.", "N:Nem o vento passa por aqui."];
+      const DX = {
+        cerca: [["(A cerca está caída. Faz anos que ninguém conserta.)"]],
+        espantalho: [["(Um espantalho sem rosto. Parece olhar para a floresta.)"], ["(Acho que ele também não quer voltar.)"]],
+        poco: [["(Um poço seco. Eu não consigo ouvir o fundo.)"]],
+        pano: [["(Um pano velho amarrado num galho. Tem a cor de uma bandana.)"]],
+        agua: [["(A água é funda demais. Preciso de outro caminho.)"]]
+      };
+      // gatilhos: [x, y, w, h, id, falas] em tiles; disparam uma vez ao passar
+      const TRG = {
+        e: [[8,0,1,10,"e1",["(Faz tempo que eu não desço até aqui sozinho.)","(Os pés pesam mais do que deveriam.)"]],
+            [26,0,1,10,"e2",["(A estrada parece mais comprida do que ontem.)"]],
+            [41,0,1,10,"e3",["O:Última chance de dar meia-volta, pessoal.","A:Eu voto pra dar meia-volta.","O:Voto negado.","N:Segura esse medo, Ka'as. Ele só atrapalha na trilha.","A:Fácil falar. Você não tem nada a perder.","N:...É. Não tenho mesmo.","O:Ei. Calma. Clima ruim já tem de sobra lá na frente."]]],
+        n: [[12,0,1,12,"n1",["A:Tá escurecendo rápido demais.","O:Calma, é só a sombra das árvores.","A:Sombra não some assim do nada!"]],
+            [26,0,1,12,"n2",["N:Prestem atenção. Pedra grande à esquerda, árvore torta à direita.","O:Anotado, chefe.","N:Não é brincadeira, Osher. É assim que a gente volta.","(Eu não sei se tem alguém esperando por mim lá.)"]]],
+        f: [[6,0,1,14,"f1",["A:Tem alguma coisa se mexendo ali. Vocês estão vendo?","N:É o vento.","A:Vento não faz esse barulho.","O:Faz, se você quiser muito que seja o vento."]],
+            [14,0,1,14,"f2",["A:Eu odeio isso. Insetos, escuro, mato apertado... tudo.","O:Respira. A gente tá aqui.","A:É isso que me assusta. Vocês sempre dizem isso.","(Ele tem razão. A gente sempre diz.)"]],
+            [26,0,1,14,"f3",["N:Meu tio me ensinou a ler essa mata. Quem passa deixa rastro.","O:E o que ela diz?","N:Que alguém passou antes de nós. Faz pouco tempo.","A:...Isso devia me deixar mais calmo?"]],
+            [36,0,1,14,"f4",["O:E se a gente não quiser voltar? ...Brincadeira.","N:Meu tio dizia que a floresta devolve o que a gente enterra."]],
+            [54,0,1,14,"f5",["V:Eu só queria parar de ouvir.","O:Ouvir o quê?","V:...Nada.","O:Você fala como quem já perdeu alguém.","V:Perder é quando ainda dá pra procurar."]]],
+        l: [[4,0,1,12,"l1",["O:Olha só... a água nem se mexe.","N:Água parada demais. Na floresta, nada fica parado sem motivo.","(Não sei se a água está parada ou se é o tempo que parou.)"]]],
+        p: [[21,0,1,12,"p1",DISC]]
+      };
+
+      // Falas: "X:texto" (V Vêek, O Osher, N Kana'a, A Ka'as, P papel, ? sem retrato). Sem prefixo = pensamento do Vêek. "!m0" para a música, "!m1" toca oneday.
+      const D = {
+        cama: [["(Vamos aproveitar o dia!)"], ["(...vamos aproveitar o dia.)"], ["(Vamos. Aproveitar. O dia.)"]],
+        janela: [["(Está nublado. Não sei se hoje é um bom dia para sair.)"], ["(A floresta parece mais perto do que ontem.)"]],
+        espelho: [["(Eu pareço cansado.)", "(O reflexo demorou para repetir o movimento.)"]],
+        gaveta: [["(Um desenho de alguém de cabelo comprido. Eu nunca consigo desenhar o rosto.)"]],
+        fogao: [["(Está frio. Mas a casa cheira a fumaça.)"]],
+        janelas: [["(A neblina desceu da floresta de novo.)"]],
+        tapete: [["(Tem uma mancha escura embaixo dele. Eu finjo que é da madeira.)"]],
+        radio: [["(Só chia.)", "?:...ka'ev... ka'ev...", "(...)"]],
+        gel: [["(Água, e um prato coberto que eu não lembro de ter guardado.)"]],
+        frutas: [["(Estão doces demais.)"], ["(Estão estragando. Rápido demais.)"], ["(Chega.)"]],
+        desp: [["(Já desliguei.)"]]
+      };
+      const P1 = "P:Querido filho,\nmandamos esta carta hoje pois já faz quatro dias que estamos viajando. Espero que você esteja bem; seu pai se preocupa muito. Deixamos frutas e alimentos suficientes até chegarmos. Te amamos.\nCom amor, mamãe.";
+      const CALL = ["O:Opa, Vêek! Tudo bom? Sou eu, o Osher!", "O:A gente quer saber se você já vai sair desse barraco aí!", "O:Tô eu e o Ka'as aqui, a gente quer notícias suas.", "V:Eu tô bem! Só me dá um tempo pra me arrumar.", "A:Que nada! Vem logo!", "V:Só um minuto, Ka'as!", "A:Sai daí logo.", "!m0", "O:Não seja tão grosso! Ele só deve estar agitado... pelo menos eu acho.", "V:Tá bom, eu já vou descer.", "?:...", "(Ninguém desligou do outro lado.)", "!m1", "(Eu preciso comer alguma coisa.)"];
+
+      // ---- diálogo ----
+      const cmd = t => {
+        if (t == "!m0") mus(null); if (t == "!m1") mus("oneday"); if (t == "!g") glitch();
+        if (t.slice(0, 3) == "!s:") snd(t.slice(3));
+        if (t == "!j") { const k = ROOMS.e.find(o => o.i == "kana"); party = [{ s: "N", x: k.x, y: k.y }, { s: "O", x: 20, y: 100 }, { s: "A", x: 20, y: 116 }]; ROOMS.e = ROOMS.e.filter(o => o != k); joined = 1; }
+        if (t == "!ka") { ROOMS.f = ROOMS.f.filter(o => o.i != "teia"); party = party.filter(f => f.s != "A"); mus(null); glitch(); snd("galho"); zb = snd("zumbido", 1); if (zb) zb.volume = .3; }
+      };
+      function nx() {
+        while (q.length && q[0][0] == "!") cmd(q.shift());
+        if (!q.length) { cur = null; const f = dn; dn = null; f && f(); return; }
+        let t = q.shift(), s = "V";
+        if (t[1] == ":") { s = t[0]; t = t.slice(2); }
+        cur = { s, t }; ci = 0;
+      }
+      const say = (l, f) => { q = l.slice(); dn = f; nx(); };
+
+      // ---- ações ----
+      async function go(r, x, y, m) {
+        fx = 1; fd.style.opacity = 1; await wait(700);
+        rm = r; px = x; py = y; dark = DK[r] || 0; hist.length = 0; party.forEach(f => { f.x = x; f.y = y; });
+        if (m !== undefined) mus(m);
+        if (zb) zb.volume = r == "p" ? .8 : .3;
+        await wait(150); fd.style.opacity = 0; await wait(600); fx = 0;
+        if (ENT[r]) say(ENT[r]);
+      }
+      async function fim() {
+        fx = 1; tela.style.transition = "transform .5s,filter .5s"; tela.style.transform = "scaleY(.012)"; tela.style.filter = "brightness(4)"; await wait(700); fd.style.opacity = 1; await wait(500);
+        mus(null); ph && ph.pause(); zb && zb.pause(); stp && stp.pause(); run = 0;
+        $("jogo").classList.add("oculto"); $("app").style.display = "";
+        mostrarMensagemFinal();
+      }
+      function use(o) {
+        cd = 30;
+        const i = o.i, k = cnt[i] = (cnt[i] || 0) + 1;
+        if (i == "portaQ") { if (al) { glitch(); return say(["(Eu preciso desligar o despertador.)"]); } return go("s", 32, 100); }
+        if (i == "portaS") return go("q", 192, 100);
+        if (i == "kana") return say(MEET);
+        if (CUTS[i]) {
+          if (CUTS[i] != 3) return say(["(" + CUTS[i] + " cortes.)", "!g", "O:A gente já passou aqui, não passou?"], () => go("f", 32, 100));
+          if (ev.t1) return say(["(Três cortes.)"]);
+          ev.t1 = 1; ROOMS.f = ROOMS.f.filter(o => o.i != "mata");
+          return say(["(Três cortes. A seiva ainda escorre.)", "N:Meu tio marcava assim. Três cortes. Mas ele sumiu há sete anos.", "O:Alguém tá copiando ele?", "N:Ou ele nunca saiu daqui.", "!g", "(A mata se abre, como se alguém tivesse acabado de passar.)"]);
+        }
+        if (i == "mata" || i == "mata2") return say(["(Mata fechada. Não dá pra passar.)"]);
+        if (i == "peg1") return ev.a ? say(["(Passos curtos, certinhos demais. Essas pegadas são minhas.)", "!g"], () => go("f", 416, 100)) : say(["(Só lama.)"]);
+        if (i == "peg2") {
+          if (!ev.a) return say(["(Só lama.)"]); if (ev.p) return say(["(Pegadas fundas. Alguém correndo.)"]);
+          ev.p = 1; ROOMS.f = ROOMS.f.filter(o => o.i != "mata2");
+          return say(["(Passos longos, fundos, irregulares. Alguém correndo.)", "!s:choro", "?:...", "O:Esse era ele?", "N:...Não. Era mais velho.", "(O caminho à frente se abre.)"]);
+        }
+        if (i == "retalhos") return say(["(Quatro retalhos amarrados num galho, cada um de uma cor.)", "O:Parecem as nossas bandanas.", "N:Na trilha, o Ka'as ia na frente. Depois o Osher. Depois eu.", "V:...E eu por último."]);
+        if (ORD.includes(i)) {
+          if (ev.t3) return say(["(A pedra já emergiu.)"]);
+          if (i != ORD[sq]) { sq = 0; return say(["(A pedra afunda. A água esquece o que lembrou.)", "!g"]); }
+          if (++sq < 4) return say(["(Pedra " + sq + " de 4. A água estremece.)"]);
+          ev.t3 = 1; ROOMS.l = ROOMS.l.filter(o => o.i != "agua");
+          return say(["(A quarta pedra emerge. A água se abre num caminho estreito.)", "!g"]);
+        }
+        if (i == "gruta") return say(joined ? ["A:Eu não entro aí. É apertado demais.", "O:Ninguém mandou entrar, Ka'as.", "N:Cheiro de terra molhada. E de outra coisa.", "(Parece que a gruta respira.)"] : ["(Uma gruta escura.)"]);
+        if (i == "portaE") return joined ? go("n", 32, 80, "dead") : say(["(Preciso falar com o Kana'a.)"]);
+        if (i == "portaN") return go("f", 32, 80);
+        if (i == "marcas") { const v = ev.m; ev.m = 1; return say(v ? ["(Três cortes.)"] : ["(Três cortes recentes na casca. A seiva ainda escorre.)", "N:Meu tio marcava assim. Três cortes. Mas ele sumiu há sete anos.", "O:Alguém tá copiando ele?", "N:Ou ele nunca saiu daqui."]); }
+        if (i == "teia") { if (ev.a) return say(["(Só teias vazias.)"]); ev.a = 1; return say(["(Teias grossas num tronco oco.)", "A:AAAAAH! NÃO! NÃO! TIRA! TIRA ISSO!", "!s:grito", "O:Ka'as, calma!", "N:Não corre! A gente não se separa!", "V:KA'AS!", "!ka", "O:Ele vai voltar. Ele sempre volta.", "N:Aqui, ninguém volta sozinho."]); }
+        if (i == "pegadas") { if (!ev.a) return say(["(Só lama.)"]); if (ev.p) return say(["(Pegadas fundas. Alguém correndo.)"]); ev.p = 1; return say(["(Pegadas fundas na lama. Alguém correndo.)", "!s:choro", "?:...", "O:Esse era ele?", "N:...Não. Era mais velho."]); }
+        if (i == "portaF") { if (!ev.p) return say([ev.a ? "N:A gente não vai embora sem o Ka'as." : "N:Ainda tem coisa pra ver por aqui."]); if (ev.h) return go("l", 32, 80, "lago"); ev.h = 1; return say(HEAVY, () => go("l", 32, 80, "lago")); }
+        if (i == "lago") return say(["(No reflexo, só um coelho. Eu.)", "(Os outros dois não estão na água.)"]);
+        if (i == "lanterna") { if (ev.l) return say(["(Uma lanterna enferrujada.)"]); ev.l = 1; return say(["N:É dele.", "(Kana'a guarda a lanterna sem dizer mais nada. Ninguém pergunta.)"]); }
+        if (i == "portaL") return ev.l ? go("p", 32, 80, null) : say(["N:...Espera. Tem uma coisa na margem."]);
+        if (i == "pedra") return say(["(Riscado à força na pedra: כאב.)"]);
+        if (i == "bilhete") return say([POEM], fim);
+        if (i == "desp" && al) { al = 0; mus(null); glitch(); setTimeout(() => mus("oneday"), 450); return say(["(Hoje é uma boa tarde.)"]); }
+        if (i == "mesa") return say(k > 1 ? [P1] : [P1, "(Eu cansei de ficar sozinho nessa casa!)", "(Quatro dias... parece muito mais.)"]);
+        if (i == "saida") {
+          if (!ring) { ring = 1; ph = snd("telefone", 1); return say(["(...O telefone da sala está tocando.)", "(Devem ser eles.)"]); }
+          if (!tl) return say(["(Eu preciso atender o telefone.)"]);
+          return say(["(Eu nem estou com tanta fome assim!)"], () => go("e", 32, 80, "world"));
+        }
+        if (i == "tel") {
+          if (!ring) return say(["(Mudo.)"]);
+          if (tl) return say(["(...só o chiado.)"]);
+          tl = 1; ph && ph.pause();
+          return say(CALL);
+        }
+        const a = D[i] || DX[i]; if (a) say(a[Math.min(k, a.length) - 1]);
+      }
+
+      const box = (x, y) => ({ x: x + 3, y: y + 9, w: 10, h: 6 });
+      const hit = b => b.x < 16 || b.x + b.w > MW() - 16 || b.y < 32 || b.y + b.h > MH() - 16 || RM().some(o => !o.n && ov(b, o));
+      function move() {
+        const dx = (K.r ? 1 : 0) - (K.l ? 1 : 0), dy = (K.d ? 1 : 0) - (K.u ? 1 : 0);
+        for (const [ax, ay] of [[dx * 1.3, 0], [0, dy * 1.3]]) {
+          if (!ax && !ay) continue;
+          const b = box(px + ax, py + ay);
+          if (!hit(b)) { px += ax; py += ay; }
+          else if (!cd) { const d = RM().find(o => o.d && ov(b, o)); if (d) { use(d); return; } }
+        }
+      }
+      function act() {
+        if (fx) return;
+        if (cur) { if (ci < cur.t.length) ci = cur.t.length; else nx(); return; }
+        const b = box(px, py), e = { x: b.x - 7, y: b.y - 7, w: b.w + 14, h: b.h + 14 };
+        const d = o => Math.hypot(o.x + o.w / 2 - px - 8, o.y + o.h / 2 - py - 12);
+        const o = RM().filter(o => !o.z && ov(e, o)).sort((a, z) => d(a) - d(z))[0];
+        if (o) use(o);
+      }
+
+      // ---- desenho ----
+      function rabbit(x, y, b, s) {
+        const r = (a, d, w, h) => c.fillRect(x + a * s, y + d * s, w * s, h * s);
+        c.fillStyle = "#d3dbd0"; r(4, 0, 2, 6); r(10, 0, 2, 6); r(3, 5, 10, 6); r(4, 13, 8, 3);
+        c.fillStyle = "#141a15"; r(5, 7, 1, 2); r(10, 7, 1, 2);
+        if (s > 1) { r(5, 9, 1, 1); r(6, 10, 4, 1); r(10, 9, 1, 1); }
+        c.fillStyle = b; r(4, 11, 8, 2);
+      }
+      function drawObj(o) {
+        const { x, y, w, h, k } = o;
+        if (k == "N") return rabbit(x, y, BC.N, 1);
+        if (k == "O") { c.fillStyle = "#5a665c"; c.fillRect(x + 1, y + 3, 14, 12); c.fillStyle = SC[o.i]; c.fillRect(x + 3, y + 6, 10, 3); c.strokeStyle = "#141a15"; c.strokeRect(x + 1.5, y + 3.5, 13, 11); return; }
+        if (k == "F") { [BC.A, BC.O, BC.N, BC.V].forEach((u, j) => { c.fillStyle = u; c.fillRect(x + 2 + j * 3, y + 2, 2, 12); }); return; }
+        if (k == "S") { c.fillStyle = "rgba(0,0,0,.6)"; c.beginPath(); c.ellipse(x + 8, y + h / 2, 4, h / 2, 0, 0, 7); c.fill(); return; }
+        if (k == "P" || k == "Q") { c.fillStyle = "#1a211b"; (k == "P" ? [[2,3],[9,8],[16,3],[23,8]] : [[1,2],[14,9],[21,3],[38,8]]).forEach(([a, b]) => c.fillRect(x + a, y + b, 4, 3)); return; }
+        if (k == "L") { c.fillStyle = "#9aa89b"; c.fillRect(x + 4, y + 3, 6, 10); return; }
+        if (k == "B") { c.fillStyle = "#cdd5ca"; c.fillRect(x + 3, y + 4, 10, 8); return; }
+        c.fillStyle = o.d ? "#1a201b" : { j: "#b9c4b8", b: "#8e9b8f", g: "#9aa79a", p: "#505c52", T: "#171e18", m: "#171e18", s: "#171e18", w: "#1b2429", R: "#4d584f", M: "#10150f" }[k] || "#5f6c61";
+        c.fillRect(x, y, w, h);
+        c.fillStyle = "#141a15";
+        if (k == "j") { c.fillRect(x + w / 2, y, 1, h); c.fillRect(x, y + h / 2, w, 1); }
+        if (k == "g") c.fillRect(x, y + h * .4, w, 1);
+        if (k == "b") { c.fillStyle = "#d9e0d6"; c.fillRect(x + 3, y + 4, 14, 10); }
+        if (k == "t") { c.fillStyle = ring && !tl && (fr >> 3 & 1) ? "#d9e0d6" : "#141a15"; c.fillRect(x + 3, y + 3, 10, 10); }
+        if (k == "r") { c.fillStyle = o.i == "desp" && al && (fr >> 3 & 1) ? "#d9e0d6" : "#141a15"; c.fillRect(x + 3, y + 4, 10, 8); }
+        if (k == "T" || k == "m" || k == "s") { c.fillStyle = "#252f27"; c.fillRect(x + 2, y + 2, w - 4, h / 2); }
+        if (k == "M") { c.fillStyle = "#2a352b"; for (let j = 0; j < w * h / 90; j++) c.fillRect(x + (j * 13) % w, y + (j * 29) % h, 3, 1); }
+        if (k == "m") { c.fillStyle = "#b9c4b8"; for (let j = 0; j < (CUTS[o.i] || 3); j++) c.fillRect(x + 4, y + 6 + j * 8, 8, 1); }
+        if (k == "s") { c.fillStyle = "#b9c4b8"; c.fillRect(x, y + h / 2, w, 1); c.fillRect(x + w / 2, y, 1, h); }
+        if (k == "w") { c.fillStyle = "#2c3a41"; for (let j = 0; j < w / 22; j++) c.fillRect(x + 8 + j * 22, y + 8 + (j % 3) * 12, 14, 1); }
+        if (k == "R") { c.fillStyle = "#d9e0d6"; c.fillRect(x + 4, y + 4, 2, 6); c.fillRect(x + 8, y + 5, 4, 1); c.fillRect(x + 8, y + 9, 4, 1); }
+        c.strokeStyle = "#141a15"; c.strokeRect(x + .5, y + .5, w - 1, h - 1);
+      }
+      const wrap = (t, mw) => { const L = []; t.split("\n").forEach(p => { let l = ""; p.split(" ").forEach(w => { const n = l ? l + " " + w : w; if (c.measureText(n).width > mw && l) { L.push(l); l = w; } else l = n; }); L.push(l); }); return L; };
+      const txt = (t, x, y, mw, lh, n) => { let r = n | 0; wrap(t, mw).forEach((l, i) => { c.fillText(l.slice(0, Math.max(0, r)), x, y + i * lh); r -= l.length + 1; }); };
+      function dlg() {
+        if (!cur) return;
+        c.font = "8px monospace";
+        const s = cur.s, pr = "VONA".includes(s);
+        if (s == "P") { c.fillStyle = "#cdd5ca"; c.fillRect(20, 8, 200, 96); c.fillStyle = "#1a211b"; txt(cur.t, 30, 22, 180, 11, ci); }
+        else {
+          c.fillStyle = "rgba(8,12,9,.92)"; c.fillRect(4, 108, 232, 48);
+          c.strokeStyle = "#9aa89b"; c.strokeRect(4.5, 108.5, 231, 47);
+          if (pr) rabbit(8, 100, BC[s], 3);
+          const tx = pr ? 62 : 14;
+          c.fillStyle = "#9aa89b"; c.fillText(NM[s] || "", tx + (pr ? 9 : 0), 118);
+          if (pr) { c.fillStyle = BC[s]; c.fillRect(tx, 112, 6, 6); c.strokeStyle = "#9aa89b"; c.strokeRect(tx + .5, 112.5, 6, 6); }
+          c.fillStyle = "#d9e0d6"; txt(cur.t, tx, 131, pr ? 168 : 212, 10, ci);
+        }
+        ci += .8;
+        if (ci >= cur.t.length && (fr >> 4 & 1)) { c.fillStyle = "#d9e0d6"; c.fillText("▼", 226, 152); }
+      }
+      function draw() {
+        const mw = MW(), mh = MH(), O = OUT[rm];
+        cx = Math.max(0, Math.min(mw - W, px - 112)) | 0; cy = Math.max(0, Math.min(mh - H, py - 72)) | 0;
+        c.save(); c.translate(-cx, -cy);
+        c.fillStyle = O ? "#262e27" : "#2d372f"; c.fillRect(0, 0, mw, mh);
+        if (O) { c.fillStyle = "#1f2620"; for (let i = 0; i < mw * mh / 180; i++) c.fillRect(16 + (i * 37) % (mw - 34), 32 + (i * 53) % (mh - 50), 2, 1); }
+        else { c.fillStyle = "#252e27"; for (let x = 16; x < mw; x += 16) c.fillRect(x, 32, 1, mh); }
+        c.fillStyle = O ? "#1a211b" : "#46524a"; c.fillRect(0, 0, mw, 32); c.fillRect(0, 0, 16, mh); c.fillRect(mw - 16, 0, 16, mh); c.fillRect(0, mh - 16, mw, 16);
+        if (O) { c.fillStyle = "#222b24"; for (let i = 0; i < mw / 16; i++) { c.fillRect(i * 16 + 3, 6 + (i % 3) * 8, 10, 12); c.fillRect(i * 16 + 3, mh - 14, 10, 8); } }
+        else { c.fillStyle = "#37413a"; for (let y = 8; y < 32; y += 8) c.fillRect(0, y, mw, 1); }
+        RM().forEach(drawObj);
+        if (ly) { c.fillStyle = "#d3dbd0"; c.fillRect(22, 42, 22, 8); c.fillRect(44, 40, 9, 10); c.fillRect(52, 41, 5, 2); c.fillRect(52, 46, 5, 2); c.fillStyle = BC.V; c.fillRect(42, 40, 2, 10); }
+        else { party.forEach(f => rabbit(f.x, f.y, BC[f.s], 1)); rabbit(px, py, BC.V, 1); }
+        c.restore();
+        for (let i = 0; i < 10; i++) { c.fillStyle = "rgba(215,225,215,.18)"; c.fillRect(Math.random() * W | 0, Math.random() * H | 0, 1, 1); }
+        if (dark) { c.fillStyle = "rgba(0,0,0," + dark + ")"; c.fillRect(0, 0, W, H); }
+        if (al && rm == "q" && fr % 50 < 5) { c.fillStyle = "rgba(220,230,220,.12)"; c.fillRect(0, 0, W, H); }
+        dlg();
+      }
+      function loop() {
+        if (!run) return; fr++; if (cd) cd--;
+        const mv = (K.r || K.l || K.u || K.d) && !cur && !fx && !ly;
+        if (!cur && !fx) { const ox = px, oy = py; move(); if (px != ox || py != oy) hist.push({ x: px, y: py }); if (hist.length > 80) hist.shift(); }
+        if (!cur && !fx && !ly) { const b = box(px, py); (TRG[rm] || []).forEach(t => { if (!ev[t[4]] && ov(b, { x: t[0] * 16, y: t[1] * 16, w: t[2] * 16, h: t[3] * 16 })) { ev[t[4]] = 1; say(t[5]); } }); }
+        party.forEach((f, i) => { const t = hist[hist.length - 1 - (i + 1) * 12] || hist[0] || { x: px, y: py }; f.x += (t.x - f.x) * .2; f.y += (t.y - f.y) * .2; });
+        const w = mv && OUT[rm]; if (w && !stp) stp = snd("passos", 1); if (!w && stp) { stp.pause(); stp = null; }
+        draw(); requestAnimationFrame(loop);
+      }
+
+      async function start() {
+        run = 1; fx = 1; rm = "q"; ly = 1; al = 1; fd.style.opacity = 1; loop();
+        av.style.fontSize = "13px"; av.textContent = "Este jogo trata de luto, perda e morte.";
+        await wait(2800); av.textContent = ""; await wait(700);
+        av.style.fontSize = "46px"; av.textContent = "שׁוֹנֶה";
+        await wait(500); av.textContent = ""; await wait(900);
+        mus("acordar"); await wait(1500);
+        fd.style.opacity = 0; await wait(2600);
+        ly = 0; px = 32; py = 68; fx = 0;
+        say(["(Que barulho irritante...)", "?:Setas ou WASD: andar  |  Z: interagir"]);
+      }
+
+      // ---- controles ----
+      const press = (k, d) => { if (!k) return; if (d) { if (!K[k]) { K[k] = 1; if (k == "z") act(); } } else K[k] = 0; };
+      addEventListener("keydown", e => { const k = KM[e.key.toLowerCase()]; if (run && k) { e.preventDefault(); press(k, 1); } });
+      addEventListener("keyup", e => press(KM[e.key.toLowerCase()], 0));
+      document.querySelectorAll("#pad [data-k]").forEach(b => {
+        const k = KM[b.dataset.k.toLowerCase()];
+        b.addEventListener("pointerdown", e => { e.preventDefault(); press(k, 1); });
+        ["pointerup", "pointerleave", "pointercancel"].forEach(v => b.addEventListener(v, () => press(k, 0)));
+      });
+      return { start };
+    })();
 
     // MENSAGEM FINAL
     function mostrarMensagemFinal() {
